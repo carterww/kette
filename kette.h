@@ -2,15 +2,16 @@
  * Author: Carter Williams
  * Email: carterww@hotmail.com
  * Date: 2024-06-17
+ * License: MIT
  *
- * This project will be contained in a single header and source file. The scope
+ * This project will be contained in a single header file. The scope
  * of this library is simply to provide a mechanism for implementing linked
  * lists in C. This library was heavily inspired by the Linux kernel's linked
  * list implementation, and I wanted to provide a similar interface for my own
  * projects.
  *
  * The library will provide two types of linked lists: singly linked lists and
- * doubly linked lists. It may be simpler to just provide only doubly linked lists,
+ * doubly linked lists. It may be simpler to provide only doubly linked lists,
  * but I did not want force the user to take on unnecessary overhead if they only
  * needed a singly linked list. Functions or macros that are denoted with an 's'
  * at the beginning of the name are for singly linked lists. Functions or macros
@@ -20,37 +21,19 @@
  *
  * Both types of linked lists will be circular. This means that the last node in
  * the list will point to the first node in the list. This is done because there
- * is almost no downside to having a circular list, but there are many upsides in
- * some cases. Instead of having to check if the next node is NULL, the user can
- * simply check if the next node is the head of the list.
+ * is almost no downside to having a circular list, but there can be many upsides.
  *
- * The library will provide the following functions for singly linked lists:
- * - slist_add: Add a node right after the given node.
- * - slist_add_tail: Add a node to the end of the list. This function will be
- *   O(n) time complexity because the list must be traversed. If this is a common
- *   operation, consider using a doubly linked list.
- * - slist_del: Delete the given node from the list.
- * - slist_empty: Returns a non-zero value if the list is empty.
- * - slist_splice: Joins two lists together by adding first list after the head of
- *   the second list.
- * 
- * The library will provide the following functions for doubly linked lists:
- * - dlist_add: Similar to slist_add.
- * - dlist_add_tail: Similar to slist_add_tail, but O(1) time complexity.
- * - dlist_del: Similar to slist_del.
- * - dlist_empty: Similar to slist_empty.
- * - dlist_splice: Similar to slist_splice.
+ * To see a quick example of using this library, check the example.c file
+ * in the root dir. For a more detailed explanation of the functions and macros,
+ * see the comments in this file.
  */
-
 #ifndef KETTE_H
 #define KETTE_H
 
 /* 
- * Singly linked list node. To make a singly linked list, give a struct
- * a member of type struct slink. The struct will be the node of the list.
- * Use the helper functions to manipulate the list through the struct's
- * singly linked list member. use the macro list_entry to get the pointer
- * to the node's struct.
+ * Singly linked list node. Add this struct as a member to your struct
+ * that you'd like to form into a linked list. See example.c on how this
+ * is done.
  */
 struct slink {
   struct slink *next;
@@ -66,35 +49,83 @@ struct dlink {
 };
 
 /*
- * From the Linux kernel. Get the container of a member of a struct.
- * This will allow the user to get the address of the actual struct
- * that contains the linked list node.
- * @param ptr: The pointer to the member of the struct.
- * @param type: The type of the struct.
- * @param member: The name of the member in the struct.
- * @return*: The address of the struct that contains the member.
+ * Macro for getting the pointer to the struct that contains the
+ * linked list node. This allows the user to get the pointer to the
+ * container struct from the linked list node.
+ *
+ * @param ptr: The pointer to the linked list node.
+ * @param type: The type of the struct that contains the linked list node.
+ * @param member: The name of the member in the struct that is the linked list node.
+ * @expands_to: A pointer to the struct that contains the linked list node.
  */
-#define container_of(ptr, type, member) ({                      \
-        const typeof( ((type *)0)->member ) *__mptr = (ptr);    \
-        (type *)((char *)__mptr - offsetof(type,member));})
+#define list_entry(ptr, type, member) \
+  ((type *)((char *)(ptr) - offsetof(type, member)))
 
 /*
- * Rebrand container_of to make it more intuitive. I'm leaving container
- * of as well because it can be used in a more general sense.
+ * Macro for iterating through a linked list. This is a helper macro for
+ * list_for_each and list_for_each_reverse. This macro should not be used
+ * directly.
  */
-#define list_entry(ptr, type, member) container_of(ptr, type, member)
+#define __list_for_each(head_ptr, entry, entry_type, entry_member, direction) \
+  for (entry = list_entry((head_ptr), entry_type, entry_member); \
+      &((entry)->entry_member) != (head_ptr); \
+      entry = list_entry((entry)->entry_member.direction, entry_type, entry_member))
 
 /*
- * Returns a non-zero value if there are no links (empty).
+ * Macro for iterating through a linked list. This works with singly and doubly
+ * linked lists. The macro will iterate through the list by following the next
+ * pointer.
+ *
+ * @param head_ptr: The head of the list.
+ * @param entry: The variable to hold the current entry in the list.
+ * @param entry_type: The type of the struct that contains the linked list entry.
+ * @param entry_member: The name of the member in the struct that is the linked list entry.
+ * @example: list_for_each(&node.list, entry, struct container, list) { ... }
  */
-#define list_empty(ptr) (ptr->next == ptr)
+#define list_for_each(head_ptr, entry, entry_type, entry_member) \
+  __list_for_each(head_ptr, entry, entry_type, entry_member, next)
+
+/*
+ * Macro for iterating through a linked list in reverse. This only works with
+ * doubly linked lists. Exactly the same as list_for_each, but follows the prev
+ * pointer. See list_for_each for more information.
+ */
+#define dlist_for_each_reverse(head_ptr, entry, entry_type, entry_member) \
+  __list_for_each(head_ptr, entry, entry_type, entry_member, prev)
+
+/*
+ * Returns a non-zero value if there are no other nodes in the list.
+ *
+ * @param ptr: The head of the list.
+ */
+#define list_empty(ptr) ((ptr)->next == (ptr))
 
 /*
  * Initialize a singly linked list.
+ *
+ * @param head: The head of the list.
+ * @example: struct slink head = SLIST_INIT(head);
  */
-#define SLIST_INIT(head) ({ &(head) })
+#define SLIST_INIT(head) { &(head) }
+
+/*
+ * Declares and initializes a singly linked list.
+ *
+ * @param name: The name of the list.
+ * @example: SLIST_HEAD(name);
+ */
 #define SLIST_HEAD(name) struct slink name = SLIST_INIT(name)
 
+/*
+ * This is a helper function used to find the previous node in a singly linked list.
+ * It is used by the slist_del, slist_add_tail, and slist_splice functions. It takes
+ * O(n) time to find the previous node. If this is called frequently, consider using
+ * a doubly linked list.
+ *
+ * @param head: The head of the list.
+ * @param prev: A pointer to a pointer that will hold the previous node. The previous
+ * pointer is placed in this variable.
+ */
 static inline void slist_find_prev(struct slink *head, struct slink **prev)
 {
   struct slink *next = head->next;
@@ -105,6 +136,24 @@ static inline void slist_find_prev(struct slink *head, struct slink **prev)
   }
 }
 
+/*
+ * Initialize a singly linked list to be empty. Allows for initialization after
+ * compile time.
+ *
+ * @param head: The head of the list.
+ */
+static inline void slist_init(struct slink *head)
+{
+  head->next = head;
+}
+
+/*
+ * Adds a node directly after the passed in head of the list. It takes O(1)
+ * time to add a node to the list.
+ *
+ * @param new: The node to add to the list.
+ * @param head: The head of the list.
+ */
 static inline void slist_add(struct slink *new, struct slink *head)
 {
   struct slink *next = head->next;
@@ -112,7 +161,13 @@ static inline void slist_add(struct slink *new, struct slink *head)
   new->next = next;
 }
 
-
+/*
+ * Adds a node to the end of the list. This takes O(n) time to add a node to the
+ * list because slist_find_prev is called.
+ *
+ * @param new: The node to add to the list.
+ * @param head: The head of the list.
+ */
 static inline void slist_add_tail(struct slink *new, struct slink *head)
 {
   struct slink *prev;
@@ -121,6 +176,12 @@ static inline void slist_add_tail(struct slink *new, struct slink *head)
   new->next = head;
 }
 
+/*
+ * Deletes a node from the list. This takes O(n) time to delete a node from the list
+ * because slist_find_prev is called.
+ *
+ * @param node: The node to delete from the list.
+ */
 static inline void slist_del(struct slink *node)
 {
   struct slink *prev;
@@ -128,6 +189,14 @@ static inline void slist_del(struct slink *node)
   prev->next = node->next;
 }
 
+/*
+ * Splices a list into another list. This takes O(n) time to splice the list into
+ * the other list because slist_find_prev is called. Similarly to slist_add, this
+ * function adds the list directly after the head.
+ *
+ * @param list: The list to splice into the head of the other list.
+ * @param head: The head of the list to splice into.
+ */
 static inline void slist_splice(struct slink *list, struct slink *head)
 {
   struct slink *list_tail;
@@ -140,10 +209,37 @@ static inline void slist_splice(struct slink *list, struct slink *head)
 
 /*
  * Initialize a doubly linked list.
+ *
+ * @param head: The head of the list.
  */
-#define DLIST_INIT(head) ({ &(head), &(head) })
+#define DLIST_INIT(head) { &(head), &(head) }
+
+/*
+ * Declares and initializes a doubly linked list.
+ *
+ * @param name: The name of the list.
+ */
 #define DLIST_HEAD(name) struct dlink name = DLIST_INIT(name)
 
+/*
+ * Initialize a doubly linked list to be empty. Allows for initialization after
+ * compile time.
+ *
+ * @param head: The head of the list.
+ */
+static inline void dlist_init(struct dlink *head)
+{
+  head->next = head;
+  head->prev = head;
+}
+
+/*
+ * Adds a node directly after the passed in head of the list. This function
+ * can be used to build a stack by adding nodes and deleting head.next.
+ *
+ * @param new: The node to add to the list.
+ * @param head: The head of the list.
+ */
 static inline void dlist_add(struct dlink *new, struct dlink *head)
 {
   struct dlink *next = head->next;
@@ -155,11 +251,25 @@ static inline void dlist_add(struct dlink *new, struct dlink *head)
   new->prev = head;
 }
 
+/*
+ * Adds a node to the end of the list. Unlike slist_add_tail, this function takes
+ * O(1) time to add a node to the list. This function can be used to build a queue
+ * by adding nodes to the tail and deleting head.next.
+ *
+ * @param new: The node to add to the list.
+ * @param head: The head of the list.
+ */
 static inline void dlist_add_tail(struct dlink *new, struct dlink *head)
 {
   dlist_add(new, head->prev);
 }
 
+/*
+ * Deletes a node from the list. This takes O(1) time to delete a node from the list
+ * unlike slist_del.
+ *
+ * @param node: The node to delete from the list.
+ */
 static inline void dlist_del(struct dlink *node)
 {
   struct dlink *prev = node->prev;
@@ -167,6 +277,13 @@ static inline void dlist_del(struct dlink *node)
   node->next->prev = prev;
 }
 
+/*
+ * Splices a list into another list. This takes O(1) time. Similarly to
+ * dlist_add, this function adds the list directly after the head.
+ *
+ * @param list: The list to splice into the head of the other list.
+ * @param head: The head of the list to splice into.
+ */
 static inline void dlist_splice(struct dlink *list, struct dlink *head)
 {
   struct dlink *list_tail = list->prev;
@@ -177,6 +294,5 @@ static inline void dlist_splice(struct dlink *list, struct dlink *head)
   list_tail->next = head_next;
   head_next->prev = list_tail;
 }
-
 
 #endif // KETTE_H

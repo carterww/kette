@@ -1,16 +1,21 @@
-CC=gcc
-C_STANDARD=c99
-CFLAGS=-Wall -Wextra -std=$(C_STANDARD) -pedantic -g
+export CC=gcc
+export C_STANDARD=c11
+export CFLAGS=-Wall -Wextra -std=$(C_STANDARD) -pedantic -g
 
-PROJECT_ABS_PATH=$(shell pwd)
-TEST_SRC_PATH=$(PROJECT_ABS_PATH)/test
+export PROJECT_ABS_PATH=$(shell pwd)
+export TEST_SRC_PATH=$(PROJECT_ABS_PATH)/tests
 
-UNITY_PROJECT_NAME=unity
-UNITY_DIR=$(PROJECT_ABS_PATH)/external/Unity
-UNITY_BUILD_DIR=$(UNITY_DIR)/build
+export UNITY_PROJECT_NAME=unity
+export UNITY_DIR=$(PROJECT_ABS_PATH)/external/Unity
+export UNITY_BUILD_DIR=$(UNITY_DIR)/build
 
 test: unity test-dlink test-slink
-	@echo "Running tests..."
+
+test-dlink: unity
+	@make -C $(TEST_SRC_PATH) test-dlink
+
+test-slink: unity
+	@make -C $(TEST_SRC_PATH) test-slink
 
 unity: $(UNITY_BUILD_DIR)
 	@echo "Building Unity..."
@@ -25,8 +30,8 @@ $(UNITY_BUILD_DIR):
 clean-all: clean-unity clean
 
 clean:
-	@rm -rf $(PROJECT_ABS_PATH)/build
-	@echo "Cleaned project build directory: $(PROJECT_ABS_PATH)/build"
+	@rm $(TEST_SRC_PATH)/dlink $(TEST_SRC_PATH)/slink
+	@echo "Cleaned test executables: $(TEST_SRC_PATH)/dlink $(TEST_SRC_PATH)/slink"
 
 clean-unity:
 	@rm -rf $(UNITY_BUILD_DIR)
