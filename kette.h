@@ -123,6 +123,26 @@ struct dlink {
 #define SLIST_HEAD(name) struct slink name = SLIST_INIT(name)
 
 /*
+ * Initialize a doubly linked list.
+ *
+ * @param head: The head of the list.
+ */
+#define DLIST_INIT(head)         \
+	{                        \
+		&(head), &(head) \
+	}
+
+/*
+ * Declares and initializes a doubly linked list.
+ *
+ * @param name: The name of the list.
+ */
+#define DLIST_HEAD(name) struct dlink name = DLIST_INIT(name)
+
+
+#endif // KETTE_H
+
+/*
  * This is a helper function used to find the previous node in a singly linked list.
  * It is used by the slist_del, slist_add_tail, and slist_splice functions. It takes
  * O(n) time to find the previous node. If this is called frequently, consider using
@@ -214,23 +234,6 @@ static inline void slist_splice(struct slink *list, struct slink *head)
 }
 
 /*
- * Initialize a doubly linked list.
- *
- * @param head: The head of the list.
- */
-#define DLIST_INIT(head)         \
-	{                        \
-		&(head), &(head) \
-	}
-
-/*
- * Declares and initializes a doubly linked list.
- *
- * @param name: The name of the list.
- */
-#define DLIST_HEAD(name) struct dlink name = DLIST_INIT(name)
-
-/*
  * Initialize a doubly linked list to be empty. Allows for initialization after
  * compile time.
  *
@@ -303,5 +306,3 @@ static inline void dlist_splice(struct dlink *list, struct dlink *head)
 	list_tail->next = head_next;
 	head_next->prev = list_tail;
 }
-
-#endif // KETTE_H
