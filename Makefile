@@ -1,5 +1,5 @@
 export CC=gcc
-export C_STANDARD=c11
+export C_STANDARD=c99
 export CFLAGS=-Wall -Wextra -std=$(C_STANDARD) -pedantic -g
 
 export PROJECT_ABS_PATH=$(shell pwd)
@@ -9,7 +9,7 @@ export UNITY_PROJECT_NAME=unity
 export UNITY_DIR=$(PROJECT_ABS_PATH)/external/Unity
 export UNITY_BUILD_DIR=$(UNITY_DIR)/build
 
-test: unity test-dlink test-slink
+tests: unity test-dlink test-slink
 
 test-dlink: unity
 	@make -C $(TEST_SRC_PATH) test-dlink

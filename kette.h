@@ -23,12 +23,14 @@
  * the list will point to the first node in the list. This is done because there
  * is almost no downside to having a circular list, but there can be many upsides.
  *
- * To see a quick example of using this library, check the example.c file
- * in the root dir. For a more detailed explanation of the functions and macros,
- * see the comments in this file.
+ * For a detailed explanation of the functions and macros, see the comments
+ * in this file. For an overview of the library with short examples, see the Usage
+ * section in the README.md file.
  */
 #ifndef KETTE_H
 #define KETTE_H
+
+#include <stddef.h>
 
 /* 
  * Singly linked list node. Add this struct as a member to your struct
@@ -36,7 +38,7 @@
  * is done.
  */
 struct slink {
-  struct slink *next;
+	struct slink *next;
 };
 
 /*
@@ -44,8 +46,8 @@ struct slink {
  * aspect except the prev pointer.
  */
 struct dlink {
-  struct dlink *next;
-  struct dlink *prev;
+	struct dlink *next;
+	struct dlink *prev;
 };
 
 /*
@@ -59,7 +61,7 @@ struct dlink {
  * @expands_to: A pointer to the struct that contains the linked list node.
  */
 #define list_entry(ptr, type, member) \
-  ((type *)((char *)(ptr) - offsetof(type, member)))
+	((type *)((char *)(ptr)-offsetof(type, member)))
 
 /*
  * Macro for iterating through a linked list. This is a helper macro for
@@ -67,9 +69,10 @@ struct dlink {
  * directly.
  */
 #define __list_for_each(head_ptr, entry, entry_type, entry_member, direction) \
-  for (entry = list_entry((head_ptr), entry_type, entry_member); \
-      &((entry)->entry_member) != (head_ptr); \
-      entry = list_entry((entry)->entry_member.direction, entry_type, entry_member))
+	for (entry = list_entry((head_ptr), entry_type, entry_member);        \
+	     &((entry)->entry_member) != (head_ptr);                          \
+	     entry = list_entry((entry)->entry_member.direction, entry_type,  \
+				entry_member))
 
 /*
  * Macro for iterating through a linked list. This works with singly and doubly
@@ -83,7 +86,7 @@ struct dlink {
  * @example: list_for_each(&node.list, entry, struct container, list) { ... }
  */
 #define list_for_each(head_ptr, entry, entry_type, entry_member) \
-  __list_for_each(head_ptr, entry, entry_type, entry_member, next)
+	__list_for_each(head_ptr, entry, entry_type, entry_member, next)
 
 /*
  * Macro for iterating through a linked list in reverse. This only works with
@@ -91,7 +94,7 @@ struct dlink {
  * pointer. See list_for_each for more information.
  */
 #define dlist_for_each_reverse(head_ptr, entry, entry_type, entry_member) \
-  __list_for_each(head_ptr, entry, entry_type, entry_member, prev)
+	__list_for_each(head_ptr, entry, entry_type, entry_member, prev)
 
 /*
  * Returns a non-zero value if there are no other nodes in the list.
@@ -106,7 +109,10 @@ struct dlink {
  * @param head: The head of the list.
  * @example: struct slink head = SLIST_INIT(head);
  */
-#define SLIST_INIT(head) { &(head) }
+#define SLIST_INIT(head) \
+	{                \
+		&(head)  \
+	}
 
 /*
  * Declares and initializes a singly linked list.
@@ -128,12 +134,12 @@ struct dlink {
  */
 static inline void slist_find_prev(struct slink *head, struct slink **prev)
 {
-  struct slink *next = head->next;
-  *prev = head;
-  while (next != head) {
-    *prev = next;
-    next = next->next;
-  }
+	struct slink *next = head->next;
+	*prev = head;
+	while (next != head) {
+		*prev = next;
+		next = next->next;
+	}
 }
 
 /*
@@ -144,7 +150,7 @@ static inline void slist_find_prev(struct slink *head, struct slink **prev)
  */
 static inline void slist_init(struct slink *head)
 {
-  head->next = head;
+	head->next = head;
 }
 
 /*
@@ -156,9 +162,9 @@ static inline void slist_init(struct slink *head)
  */
 static inline void slist_add(struct slink *new, struct slink *head)
 {
-  struct slink *next = head->next;
-  head->next = new;
-  new->next = next;
+	struct slink *next = head->next;
+	head->next = new;
+	new->next = next;
 }
 
 /*
@@ -170,10 +176,10 @@ static inline void slist_add(struct slink *new, struct slink *head)
  */
 static inline void slist_add_tail(struct slink *new, struct slink *head)
 {
-  struct slink *prev;
-  slist_find_prev(head, &prev);
-  prev->next = new;
-  new->next = head;
+	struct slink *prev;
+	slist_find_prev(head, &prev);
+	prev->next = new;
+	new->next = head;
 }
 
 /*
@@ -184,9 +190,9 @@ static inline void slist_add_tail(struct slink *new, struct slink *head)
  */
 static inline void slist_del(struct slink *node)
 {
-  struct slink *prev;
-  slist_find_prev(node, &prev);
-  prev->next = node->next;
+	struct slink *prev;
+	slist_find_prev(node, &prev);
+	prev->next = node->next;
 }
 
 /*
@@ -199,12 +205,12 @@ static inline void slist_del(struct slink *node)
  */
 static inline void slist_splice(struct slink *list, struct slink *head)
 {
-  struct slink *list_tail;
-  slist_find_prev(list, &list_tail);
+	struct slink *list_tail;
+	slist_find_prev(list, &list_tail);
 
-  struct slink *head_next = head->next;
-  head->next = list;
-  list_tail->next = head_next;
+	struct slink *head_next = head->next;
+	head->next = list;
+	list_tail->next = head_next;
 }
 
 /*
@@ -212,7 +218,10 @@ static inline void slist_splice(struct slink *list, struct slink *head)
  *
  * @param head: The head of the list.
  */
-#define DLIST_INIT(head) { &(head), &(head) }
+#define DLIST_INIT(head)         \
+	{                        \
+		&(head), &(head) \
+	}
 
 /*
  * Declares and initializes a doubly linked list.
@@ -229,8 +238,8 @@ static inline void slist_splice(struct slink *list, struct slink *head)
  */
 static inline void dlist_init(struct dlink *head)
 {
-  head->next = head;
-  head->prev = head;
+	head->next = head;
+	head->prev = head;
 }
 
 /*
@@ -242,13 +251,13 @@ static inline void dlist_init(struct dlink *head)
  */
 static inline void dlist_add(struct dlink *new, struct dlink *head)
 {
-  struct dlink *next = head->next;
-  // Fix old
-  next->prev = new;
-  head->next = new;
-  // Make new
-  new->next = next;
-  new->prev = head;
+	struct dlink *next = head->next;
+	// Fix old
+	next->prev = new;
+	head->next = new;
+	// Make new
+	new->next = next;
+	new->prev = head;
 }
 
 /*
@@ -261,7 +270,7 @@ static inline void dlist_add(struct dlink *new, struct dlink *head)
  */
 static inline void dlist_add_tail(struct dlink *new, struct dlink *head)
 {
-  dlist_add(new, head->prev);
+	dlist_add(new, head->prev);
 }
 
 /*
@@ -272,9 +281,9 @@ static inline void dlist_add_tail(struct dlink *new, struct dlink *head)
  */
 static inline void dlist_del(struct dlink *node)
 {
-  struct dlink *prev = node->prev;
-  prev->next = node->next;
-  node->next->prev = prev;
+	struct dlink *prev = node->prev;
+	prev->next = node->next;
+	node->next->prev = prev;
 }
 
 /*
@@ -286,13 +295,13 @@ static inline void dlist_del(struct dlink *node)
  */
 static inline void dlist_splice(struct dlink *list, struct dlink *head)
 {
-  struct dlink *list_tail = list->prev;
-  struct dlink *head_next = head->next;
-  head->next = list;
-  list->prev = head;
+	struct dlink *list_tail = list->prev;
+	struct dlink *head_next = head->next;
+	head->next = list;
+	list->prev = head;
 
-  list_tail->next = head_next;
-  head_next->prev = list_tail;
+	list_tail->next = head_next;
+	head_next->prev = list_tail;
 }
 
 #endif // KETTE_H
