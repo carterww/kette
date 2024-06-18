@@ -1,0 +1,6 @@
+[submodule "Unity"]
+	path = Unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
+[submodule "external/Unity"]
+	path = external/Unity
+	url = https://github.com/ThrowTheSwitch/Unity.git
