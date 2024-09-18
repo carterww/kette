@@ -69,7 +69,7 @@ struct dlink {
  * directly.
  */
 #define __list_for_each(head_ptr, entry, entry_type, entry_member, direction) \
-	for (entry = list_entry((head_ptr), entry_type, entry_member);        \
+	for (entry = list_entry((head_ptr)->next, entry_type, entry_member);        \
 	     &((entry)->entry_member) != (head_ptr);                          \
 	     entry = list_entry((entry)->entry_member.direction, entry_type,  \
 				entry_member))
