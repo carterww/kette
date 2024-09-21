@@ -140,8 +140,6 @@ struct dlink {
 #define DLIST_HEAD(name) struct dlink name = DLIST_INIT(name)
 
 
-#endif // KETTE_H
-
 /*
  * This is a helper function used to find the previous node in a singly linked list.
  * It is used by the slist_del, slist_add_tail, and slist_splice functions. It takes
@@ -306,3 +304,4 @@ static inline void dlist_splice(struct dlink *list, struct dlink *head)
 	list_tail->next = head_next;
 	head_next->prev = list_tail;
 }
+#endif // KETTE_H
